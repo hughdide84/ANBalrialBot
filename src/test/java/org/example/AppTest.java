@@ -12,32 +12,20 @@ import org.junit.Test;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Map;
 
 
 public class AppTest {
 
 
-    @Test
-    public void something() {
-
-        PlanificacionUsuarioDAO planDao = new PlanificacionUsuarioORMDAO();
-
-        PlanificacionUsuario plan = planDao.consultar(2);
-        System.out.println(plan == null);
-        System.out.println(plan);
-        System.out.println(plan.getPlanificacion().toString());
-
-    }
+   @Test
+    public void requestTest() throws IOException {
+       String filePath = "src/main/resources/registro_recordatorio.json";
 
 
-    @Test
-    public void requestTest() {
-
-        DAOFactory factory = DAOFactoryORM.getDAOFactory(1);
-        Planificacion plan = factory.getPlanificacionDAO().consultar(64);
-
-        System.out.println(plan.getUsuario());
+       Files.writeString(Path.of(filePath), "hola me llamo juan", StandardOpenOption.WRITE);
     }
 
 
@@ -48,13 +36,14 @@ public class AppTest {
     public void shouldAnswerWithTrue() throws IOException {
         Gson gson = new GsonBuilder().create();
 
-        String filePath = "src/test/resources/bot_config.json";
+        String filePath = "src/main/resources/registro_recordatorio.json";
         StringBuilder sb = new StringBuilder();
 
         Files.lines(new File(filePath).toPath()).forEach(sb::append);
 
-
         JsonObject result = JsonParser.parseString(sb.toString()).getAsJsonObject();
         Map map = gson.fromJson(result, Map.class);
+
+        System.out.println(map);
     }
 }

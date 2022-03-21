@@ -10,8 +10,12 @@ import org.balrial.model.PlanificacionUsuario;
 import org.balrial.model.Usuario;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.bot.AbilityBot;
+import org.telegram.abilitybots.api.sender.DefaultSender;
+import org.telegram.abilitybots.api.sender.MessageSender;
+import org.telegram.abilitybots.api.sender.SilentSender;
 
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,13 +30,14 @@ public class MyBot extends AbilityBot {
     DAOFactory factory = DAOFactoryORM.getDAOFactory(1);
     PlanificacionDAO planDao = factory.getPlanificacionDAO();
     UsuarioDAO usuarioDAO = factory.getUsuarioDAO();
-    RecordatorioManager manager = new RecordatorioManager();
+    RecordatorioManager manager = new RecordatorioManager(new SilentSender(new DefaultSender(this)));
 
 
     public MyBot() {
         super("2026788812:AAHVIpeM9Lkd_Ke1Tv5Nis7rCbY_6VBnmtM", "TestBot");
-    }
 
+        new Thread(manager).start();
+    }
 
     @Override
     public long creatorId() {
@@ -40,6 +45,11 @@ public class MyBot extends AbilityBot {
     }
 
 
+    /**
+     * Método para registrar el token de un usuario
+     * todo
+     * @return
+     */
     public Ability registrarToken() {
         return Ability.builder()
                 .name("registrarse")
@@ -62,6 +72,11 @@ public class MyBot extends AbilityBot {
     }
 
 
+    /**
+     * Método para que un usuario con token active sus recordatorio
+     * todo
+     * @return
+     */
     public Ability activarRecordatorios() {
         return Ability.builder()
                 .name("activar_recordatorios")
@@ -71,36 +86,54 @@ public class MyBot extends AbilityBot {
                 .input(0)
                 .action(ctx -> {
 
-                    long id = ctx.user().getId();
+                    try {
+                        if (manager.registrarId(ctx.user().getId())) {
+                            silent.send("Se han activado los recordatorios", ctx.chatId());
+                        } else {
+                            silent.send("Los recordatorios ya están activos", ctx.chatId());
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
-                    if (manager.registeredId.contains(id)) {
-                        silent.send("Los recordatorios ya están activados para este usuario", ctx.chatId());
-                    } else {
-                        manager.registeredId.add(ctx.user().getId());
-                        System.out.println(manager.registeredId.size());
-                        silent.send("Los recordatorios han sido activados", ctx.chatId());
+                })
+                .build();
+    }
 
-                        manager.doStuff(ctx);
+
+    /**
+     * Método para desactivar los recordatorios de un usuario
+     * todo
+     * @return
+     */
+    public Ability desactivarRecordatorios() {
+        return Ability.builder()
+                .name("desactivar_recordatorios")
+                .info("Says hello world!")
+                .privacy(PUBLIC)
+                .locality(ALL)
+                .input(0)
+                .action(ctx -> {
+                    try {
+
+                        if (manager.bajaId(ctx.user().getId())) {
+                            silent.send("Se han desactivado los recordatorios", ctx.chatId());
+                        } else {
+                            silent.send("Los recordatorios no están activados", ctx.chatId());
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 })
                 .build();
     }
 
 
-    public Ability desactivarRecordatorios() {
-        return Ability.builder()
-                .name("desactivar_reccordatorios")
-                .info("Says hello world!")
-                .privacy(PUBLIC)
-                .locality(ALL)
-                .input(0)
-                .action(ctx -> {
-                    silent.send("Desactivar recordatorios", ctx.chatId());
-                })
-                .build();
-    }
-
-
+    /**
+     * Método para recuperar los planes de un usuario
+     *
+     * @return
+     */
     public Ability recuperarPlanes() {
         return Ability.builder()
                 .name("planes")
@@ -120,7 +153,7 @@ public class MyBot extends AbilityBot {
                     3. Obtener
                      */
 
-                    silent.send("Desactivar recordatorios", ctx.chatId());
+                    silent.send("prueba: " + ctx.chatId() + "\n" + ctx.user().getId(), ctx.chatId());
                 })
                 .build();
     }
