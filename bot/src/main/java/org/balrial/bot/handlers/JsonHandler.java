@@ -1,11 +1,8 @@
-package org.example.bot;
+package org.balrial.bot.handlers;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import org.checkerframework.checker.units.qual.A;
-
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -13,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 
 public class JsonHandler {
 

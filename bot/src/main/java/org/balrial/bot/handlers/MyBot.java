@@ -1,23 +1,18 @@
-package org.example.bot;
+package org.balrial.bot.handlers;
 
 import org.balrial.dao.planificacion.PlanificacionDAO;
-import org.balrial.dao.planificacionUsuario.PlanificacionUsuarioDAO;
 import org.balrial.dao.usuario.UsuarioDAO;
 import org.balrial.factory.DAOFactory;
 import org.balrial.factory.DAOFactoryORM;
-import org.balrial.model.Planificacion;
-import org.balrial.model.PlanificacionUsuario;
 import org.balrial.model.Usuario;
+import org.springframework.stereotype.Component;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.sender.DefaultSender;
-import org.telegram.abilitybots.api.sender.MessageSender;
 import org.telegram.abilitybots.api.sender.SilentSender;
 
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.telegram.abilitybots.api.objects.Locality.ALL;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
@@ -25,18 +20,18 @@ import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 /**
  * todo: Buscar una forma de hacer configurable el user y el token
  */
+@Component
 public class MyBot extends AbilityBot {
 
     DAOFactory factory = DAOFactoryORM.getDAOFactory(1);
     PlanificacionDAO planDao = factory.getPlanificacionDAO();
     UsuarioDAO usuarioDAO = factory.getUsuarioDAO();
-    RecordatorioManager manager = new RecordatorioManager(new SilentSender(new DefaultSender(this)));
+    RecordatorioManager manager =  new RecordatorioManager();
 
 
     public MyBot() {
         super("2026788812:AAHVIpeM9Lkd_Ke1Tv5Nis7rCbY_6VBnmtM", "TestBot");
-
-        new Thread(manager).start();
+        manager.setSilent(new SilentSender(new DefaultSender(this)));
     }
 
     @Override
@@ -47,7 +42,7 @@ public class MyBot extends AbilityBot {
 
     /**
      * Método para registrar el token de un usuario
-     * todo
+     * todo algo del token
      * @return
      */
     public Ability registrarToken() {
@@ -56,11 +51,14 @@ public class MyBot extends AbilityBot {
                 .info("Registrar un token a una cuenta de Telegram")
                 .privacy(PUBLIC)
                 .locality(ALL)
-                .input(0)
+                .input(1)
                 .action(ctx -> {
 
                     // todo: cambiar esto por un método que busque a un usuario por id de telegram
 
+
+                    // todos los ids para el última persona que se registre
+                    // eliminar el id de telegram del anterior propietario
 
                     //todo caso de error(?): usuario ya tiene un id
                     //todo caso de error(?): ese id ya tiene un usuario que no es el del token
@@ -103,7 +101,7 @@ public class MyBot extends AbilityBot {
 
     /**
      * Método para desactivar los recordatorios de un usuario
-     * todo
+     *
      * @return
      */
     public Ability desactivarRecordatorios() {
@@ -143,8 +141,7 @@ public class MyBot extends AbilityBot {
                 .input(0)
                 .action(ctx -> {
 
-                       /*todo: falta cambiar la mierda actual por un método
-                          que devuelva una lista de planificaciones en base al
+                       /*todo: Usar el método de buscar en base a la id de telegram
                         */
 
                     /*

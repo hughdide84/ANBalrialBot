@@ -1,4 +1,4 @@
-package org.example.botloader;
+package org.balrial.bot.botloader;
 
 import com.google.gson.Gson;
 

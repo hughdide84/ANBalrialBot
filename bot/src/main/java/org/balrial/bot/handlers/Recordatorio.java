@@ -1,4 +1,4 @@
-package org.example.bot;
+package org.balrial.bot.handlers;
 
 import org.balrial.dao.planificacion.PlanificacionDAO;
 import org.balrial.factory.DAOFactory;
@@ -25,8 +25,6 @@ public class Recordatorio extends Thread {
     @Override
     public void run() {
         super.run();
-
-
         }
     }
 
