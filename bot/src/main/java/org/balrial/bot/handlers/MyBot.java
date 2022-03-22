@@ -1,9 +1,10 @@
 package org.balrial.bot.handlers;
 
-import org.balrial.dao.planificacion.PlanificacionDAO;
+import org.balrial.connection.ConexionORM;
 import org.balrial.dao.usuario.UsuarioDAO;
 import org.balrial.factory.DAOFactory;
 import org.balrial.factory.DAOFactoryORM;
+import org.balrial.model.Planificacion;
 import org.balrial.model.Usuario;
 import org.springframework.stereotype.Component;
 import org.telegram.abilitybots.api.objects.Ability;
@@ -13,6 +14,7 @@ import org.telegram.abilitybots.api.sender.SilentSender;
 
 
 import java.io.IOException;
+import java.util.List;
 
 import static org.telegram.abilitybots.api.objects.Locality.ALL;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
@@ -23,15 +25,14 @@ import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 @Component
 public class MyBot extends AbilityBot {
 
-    DAOFactory factory = DAOFactoryORM.getDAOFactory(1);
-    PlanificacionDAO planDao = factory.getPlanificacionDAO();
-    UsuarioDAO usuarioDAO = factory.getUsuarioDAO();
-    RecordatorioManager manager =  new RecordatorioManager();
+    RecordatorioManager manager = new RecordatorioManager();
+    DAOFactory factory;
 
 
     public MyBot() {
         super("2026788812:AAHVIpeM9Lkd_Ke1Tv5Nis7rCbY_6VBnmtM", "TestBot");
         manager.setSilent(new SilentSender(new DefaultSender(this)));
+        factory = DAOFactoryORM.getDAOFactory(1);
     }
 
     @Override
@@ -42,10 +43,11 @@ public class MyBot extends AbilityBot {
 
     /**
      * Método para registrar el token de un usuario
-     * todo algo del token
-     * @return
+     *
+     * @return movidas de la librería
      */
     public Ability registrarToken() {
+
         return Ability.builder()
                 .name("registrarse")
                 .info("Registrar un token a una cuenta de Telegram")
@@ -54,17 +56,26 @@ public class MyBot extends AbilityBot {
                 .input(1)
                 .action(ctx -> {
 
-                    // todo: cambiar esto por un método que busque a un usuario por id de telegram
+                    UsuarioDAO usuarioDAO = factory.getUsuarioDAO();
+                    usuarioDAO.abrirConexion();
 
+                    int userId = Math.toIntExact(ctx.user().getId());
+                    Usuario user = usuarioDAO.consultarPorToken(ctx.firstArg());
 
-                    // todos los ids para el última persona que se registre
-                    // eliminar el id de telegram del anterior propietario
+                    if (user != null) {
 
-                    //todo caso de error(?): usuario ya tiene un id
-                    //todo caso de error(?): ese id ya tiene un usuario que no es el del token
+                        Usuario user2 = usuarioDAO.consultarTelegramId(userId);
 
+                        if (user2 != null) {
+                            System.out.println(user.equals(user2));
+                        }
+
+                        user.setTelegramId(userId);
+                        usuarioDAO.actualizar(user);
+                    }
 
                     silent.send("Esta cuenta ha sido registrada", ctx.chatId());
+                    usuarioDAO.cerrarConexion();
                 })
                 .build();
     }
@@ -73,12 +84,13 @@ public class MyBot extends AbilityBot {
     /**
      * Método para que un usuario con token active sus recordatorio
      * todo
+     *
      * @return
      */
     public Ability activarRecordatorios() {
         return Ability.builder()
                 .name("activar_recordatorios")
-                .info("Says hello world!")
+                .info("Envía un recordatorio 24h antes de un plan")
                 .privacy(PUBLIC)
                 .locality(ALL)
                 .input(0)
@@ -93,7 +105,6 @@ public class MyBot extends AbilityBot {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-
                 })
                 .build();
     }
@@ -129,7 +140,7 @@ public class MyBot extends AbilityBot {
 
     /**
      * Método para recuperar los planes de un usuario
-     *
+     * todo mejorar el string que envío
      * @return
      */
     public Ability recuperarPlanes() {
@@ -141,31 +152,31 @@ public class MyBot extends AbilityBot {
                 .input(0)
                 .action(ctx -> {
 
-                       /*todo: Usar el método de buscar en base a la id de telegram
-                        */
+                    UsuarioDAO usuarioDAO = factory.getUsuarioDAO();
+                    usuarioDAO.abrirConexion();
 
-                    /*
-                    1. Obtener user de esta telegram id
-                    2. Obtener los planes de dicho user
-                    3. Obtener
-                     */
+                    Usuario user = usuarioDAO.consultarTelegramId(Math.toIntExact(ctx.user().getId()));
+                    List<Planificacion> planList = user.getPlanificaciones();
 
-                    silent.send("prueba: " + ctx.chatId() + "\n" + ctx.user().getId(), ctx.chatId());
+
+                    StringBuilder sb = new StringBuilder();
+
+
+                    planList.stream().forEach(plan -> {
+
+                        sb.append("Día: " + plan.getFecha() + "\n" +
+                                "Hora de inicio: " + plan.getHoraInicio() + "\n" +
+                                "Hora de finalizacion: " + plan.getHoraFin() + "\n\n" +
+                                "Coordinador: " + plan.getUbicacionProyecto().getCoordinador() + "\n\n" +
+                                "Ubicación: " + plan.getUbicacionProyecto().getUbicacion().getDireccion() + "\n"
+                        );
+
+                        silent.send(sb.toString(), ctx.chatId());
+                    });
+
+
+                    usuarioDAO.cerrarConexion();
                 })
                 .build();
-    }
-
-
-    public Usuario userByTelegramId(long id) {
-
-        for (Usuario usuario : usuarioDAO.listar()) {
-
-            if ((long) usuario.getTelegramId() == id) {
-
-                return usuario;
-            }
-        }
-
-        return null;
     }
 }

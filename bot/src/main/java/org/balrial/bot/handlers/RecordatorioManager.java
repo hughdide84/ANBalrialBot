@@ -17,12 +17,12 @@ import java.util.ArrayList;
 @Component
 public class RecordatorioManager {
 
-    DAOFactory factory = DAOFactory.getDAOFactory(1);
-    UsuarioDAO userDao = factory.getUsuarioDAO();
-    String filePath = "src/main/resources/registro_recordatorio.json";
+    DAOFactory factory;
     static SilentSender silent;
 
     RecordatorioManager() {
+
+        factory = DAOFactory.getDAOFactory(1);
     }
 
     /**
@@ -33,11 +33,8 @@ public class RecordatorioManager {
 
         System.out.println(silent);
         if (silent != null) {
-            ArrayList<Long> idList = JsonHandler.readJson();
 
-            idList.forEach(e -> {
-                silent.send("Recordatorio", e);
-            });
+
         }
     }
 
@@ -55,8 +52,13 @@ public class RecordatorioManager {
     public boolean registrarId(long id) throws IOException {
         // TODO migrar esto a los métodos de la bd
 
-        if (!estaRegistrado(id)) {
-            JsonHandler.writeId(id);
+        UsuarioDAO usuarioDAO = factory.getUsuarioDAO();
+        usuarioDAO.abrirConexion();
+
+        Usuario user = usuarioDAO.consultar(Math.toIntExact(id));
+
+
+        if (!estaRegistrado(user)) {
             return true;
         }
 
@@ -73,21 +75,30 @@ public class RecordatorioManager {
      */
     public boolean bajaId(long id) throws IOException {
 
+        UsuarioDAO usuarioDAO = factory.getUsuarioDAO();
+        usuarioDAO.abrirConexion();
 
-        Usuario user =  userDao.consultarTelegramId((int)id);
+        Usuario user = usuarioDAO.consultar(Math.toIntExact(id));
+
 
         // TODO migrar esto a los métodos de la bd
-        if (estaRegistrado(id)) {
-            JsonHandler.removeId(id);
+        if (estaRegistrado(user)) {
             return true;
         }
         return false;
     }
 
 
-    private boolean estaRegistrado(long id) throws IOException {
-        // TODO migrar esto a los métodos de la bd
+    private boolean estaRegistrado(Usuario user) throws IOException {
 
-        return JsonHandler.readJson().contains(id);
+        UsuarioDAO usuarioDAO =  factory.getUsuarioDAO();
+        usuarioDAO.abrirConexion();
+
+
+
+        usuarioDAO.cerrarConexion();
+
+        return false;
+        // todo: on hold para notificaciones
     }
 }
