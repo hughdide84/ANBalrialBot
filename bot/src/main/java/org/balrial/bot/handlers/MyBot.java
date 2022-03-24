@@ -60,21 +60,28 @@ public class MyBot extends AbilityBot {
                     usuarioDAO.abrirConexion();
 
                     int userId = Math.toIntExact(ctx.user().getId());
-                    Usuario user = usuarioDAO.consultarPorToken(ctx.firstArg());
+                    Usuario telegramUser = usuarioDAO.consultarPorToken(ctx.firstArg());
 
-                    if (user != null) {
+                    // Si hay un usuario con el token
+                    if (telegramUser != null) {
 
-                        Usuario user2 = usuarioDAO.consultarTelegramId(userId);
+                        // Busco a ver si hay un usuario con la id de telegram del que pregunta
+                        Usuario bdUser = usuarioDAO.consultarTelegramId(userId);
 
-                        if (user2 != null) {
-                            System.out.println(user.equals(user2));
+                        // Si hay un usuario con dicha id, que no sea el del token, se le borra la id de telegram
+                        if (bdUser != null && !telegramUser.equals(bdUser)) {
+
+                            bdUser.setTelegramId(null);
+                            usuarioDAO.actualizar(bdUser);
                         }
 
-                        user.setTelegramId(userId);
-                        usuarioDAO.actualizar(user);
+                        telegramUser.setTelegramId(userId);
+                        usuarioDAO.actualizar(telegramUser);
+                        silent.send("Esta cuenta ha sido registrada", ctx.chatId());
+                    } else {
+                        silent.send("Este token es incorrecto", ctx.chatId());
                     }
 
-                    silent.send("Esta cuenta ha sido registrada", ctx.chatId());
                     usuarioDAO.cerrarConexion();
                 })
                 .build();
@@ -141,7 +148,7 @@ public class MyBot extends AbilityBot {
     /**
      * Método para recuperar los planes de un usuario
      * todo mejorar el string que envío
-     * @return
+     * @return los planes
      */
     public Ability recuperarPlanes() {
         return Ability.builder()
